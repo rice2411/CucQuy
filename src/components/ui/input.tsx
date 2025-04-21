@@ -1,6 +1,6 @@
-import * as React from "react";
+import * as React from "react"
 
-import { cn } from "@/utils/tailwind";
+import { cn } from "@/utils/tailwind"
 
 function Input({
   className,
@@ -21,7 +21,7 @@ function Input({
       )}
       {...props}
     />
-  );
+  )
 }
 
-export { Input };
+export { Input }

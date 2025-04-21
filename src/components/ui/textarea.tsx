@@ -1,9 +1,9 @@
-import * as React from "react";
-import { cn } from "@/utils/tailwind";
+import * as React from "react"
+import { cn } from "@/utils/tailwind"
 
 export interface TextareaProps
   extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
-  error?: string;
+  error?: string
 }
 
 const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
@@ -18,9 +18,9 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
         ref={ref}
         {...props}
       />
-    );
+    )
   }
-);
-Textarea.displayName = "Textarea";
+)
+Textarea.displayName = "Textarea"
 
-export { Textarea };
+export { Textarea }

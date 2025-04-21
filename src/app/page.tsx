@@ -1,17 +1,15 @@
-"use client";
+import PageContent from "@/components"
 
-import { OrderStatistics } from "@/components/order/OrderStatistics";
-import OrderForm from "../components/OrderForm";
-
-export default function Home() {
+export default function PageHome() {
   return (
-    <main className="min-h-screen bg-gray-100 py-12">
-      <div className="container mx-auto px-4">
-        <h1 className="text-4xl font-bold text-center mb-8">
-          Tiệm Bánh Cúc Quỳ
-        </h1>
-        <OrderStatistics />
+    <div className="min-h-screen min-w-screen flex items-center justify-center">
+      <div className="fixed inset-0 bg-[url('/background.jpg')] bg-cover bg-center bg-no-repeat bg-fixed">
+        <div className="min-h-screen flex items-center justify-center p-4">
+          <div className="glass-container relative w-full max-w-7xl h-full bg-black/40 backdrop-blur-md rounded-lg border border-white/20 shadow-lg">
+            <PageContent />
+          </div>
+        </div>
       </div>
-    </main>
-  );
+    </div>
+  )
 }

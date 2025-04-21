@@ -1,6 +1,7 @@
 import nodemailer from "nodemailer";
 
 export interface OrderDetails {
+  id?: string;
   customerName: string;
   phone: string;
   address: string;
@@ -8,6 +9,7 @@ export interface OrderDetails {
   quantity: number;
   totalAmount: number;
   note?: string;
+  createdAt?: any;
 }
 
 export const sendOrderEmail = async (orderDetails: OrderDetails) => {
