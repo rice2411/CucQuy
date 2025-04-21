@@ -1,51 +1,50 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 
-const orderFormSchema = z.object({
-  customerName: z.string().min(2, "Tên khách hàng phải có ít nhất 2 ký tự"),
-  phoneNumber: z.string().min(10, "Số điện thoại không hợp lệ"),
-  productType: z.string().min(1, "Vui lòng chọn loại sản phẩm"),
-  quantity: z.number().min(1, "Số lượng phải lớn hơn 0"),
-  deliveryDate: z.string().min(1, "Vui lòng chọn ngày giao hàng"),
-  notes: z.string().optional(),
-});
+interface OrderFormData {
+  customerName: string;
+  phoneNumber: string;
+  productType: string;
+  quantity: number;
+  deliveryDate: string;
+  notes: string;
+}
 
 export function OrderForm() {
-  const form = useForm<z.infer<typeof orderFormSchema>>({
-    resolver: zodResolver(orderFormSchema),
-    defaultValues: {
-      customerName: "",
-      phoneNumber: "",
-      productType: "",
-      quantity: 1,
-      notes: "",
-    },
-  });
+  const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const onSubmit = (data: z.infer<typeof orderFormSchema>) => {
-    console.log(data);
-    // Handle form submission
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setError(null);
+
+    const formData = new FormData(e.currentTarget);
+    const data: OrderFormData = {
+      customerName: formData.get("customerName") as string,
+      phoneNumber: formData.get("phoneNumber") as string,
+      productType: formData.get("productType") as string,
+      quantity: parseInt(formData.get("quantity") as string),
+      deliveryDate: formData.get("deliveryDate") as string,
+      notes: formData.get("notes") as string,
+    };
+
+    try {
+      // TODO: Implement order service
+      console.log("Order data:", data);
+      router.push("/orders");
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Đặt hàng thất bại. Vui lòng thử lại.";
+      setError(errorMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -56,153 +55,103 @@ export function OrderForm() {
             <h2 className="text-white text-2xl font-semibold mb-4">
               Đặt đơn hàng
             </h2>
-            <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className="space-y-4"
-              >
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-white text-sm font-medium mb-1">
+                    Tên khách hàng
+                  </label>
+                  <input
+                    type="text"
                     name="customerName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-white text-sm font-medium">
-                          Tên khách hàng
-                        </FormLabel>
-                        <FormControl>
-                          <Input
-                            className="bg-transparent border-white/50 text-white placeholder:text-white/70"
-                            placeholder="Nhập tên khách hàng"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage className="text-red-400" />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="phoneNumber"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-white text-sm font-medium">
-                          Số điện thoại
-                        </FormLabel>
-                        <FormControl>
-                          <Input
-                            className="bg-transparent border-white/50 text-white placeholder:text-white/70"
-                            placeholder="Nhập số điện thoại"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage className="text-red-400" />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="productType"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-white text-sm font-medium">
-                          Loại sản phẩm
-                        </FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger className="bg-transparent border-white/50 text-white">
-                              <SelectValue placeholder="Chọn loại sản phẩm" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="cake">Bánh kem</SelectItem>
-                            <SelectItem value="bread">Bánh mì</SelectItem>
-                            <SelectItem value="cookie">Bánh quy</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage className="text-red-400" />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="quantity"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-white text-sm font-medium">
-                          Số lượng
-                        </FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            className="bg-transparent border-white/50 text-white placeholder:text-white/70"
-                            placeholder="Nhập số lượng"
-                            {...field}
-                            onChange={(e) =>
-                              field.onChange(parseInt(e.target.value))
-                            }
-                          />
-                        </FormControl>
-                        <FormMessage className="text-red-400" />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="deliveryDate"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-white text-sm font-medium">
-                          Ngày giao hàng
-                        </FormLabel>
-                        <FormControl>
-                          <Input
-                            type="date"
-                            className="bg-transparent border-white/50 text-white placeholder:text-white/70"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage className="text-red-400" />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="notes"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-white text-sm font-medium">
-                          Ghi chú
-                        </FormLabel>
-                        <FormControl>
-                          <Input
-                            className="bg-transparent border-white/50 text-white placeholder:text-white/70"
-                            placeholder="Nhập ghi chú (nếu có)"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage className="text-red-400" />
-                      </FormItem>
-                    )}
+                    className="w-full bg-transparent border border-white/50 text-white placeholder:text-white/70 rounded-md px-3 py-2"
+                    placeholder="Nhập tên khách hàng"
+                    required
                   />
                 </div>
 
-                <Button
-                  type="submit"
-                  className="w-full bg-blue-500 hover:bg-blue-600 text-white"
-                >
-                  Đặt hàng
-                </Button>
-              </form>
-            </Form>
+                <div>
+                  <label className="block text-white text-sm font-medium mb-1">
+                    Số điện thoại
+                  </label>
+                  <input
+                    type="tel"
+                    name="phoneNumber"
+                    className="w-full bg-transparent border border-white/50 text-white placeholder:text-white/70 rounded-md px-3 py-2"
+                    placeholder="Nhập số điện thoại"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-white text-sm font-medium mb-1">
+                    Loại sản phẩm
+                  </label>
+                  <select
+                    name="productType"
+                    className="w-full bg-transparent border border-white/50 text-white rounded-md px-3 py-2"
+                    required
+                  >
+                    <option value="">Chọn loại sản phẩm</option>
+                    <option value="cake">Bánh kem</option>
+                    <option value="bread">Bánh mì</option>
+                    <option value="cookie">Bánh quy</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-white text-sm font-medium mb-1">
+                    Số lượng
+                  </label>
+                  <input
+                    type="number"
+                    name="quantity"
+                    min="1"
+                    className="w-full bg-transparent border border-white/50 text-white placeholder:text-white/70 rounded-md px-3 py-2"
+                    placeholder="Nhập số lượng"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-white text-sm font-medium mb-1">
+                    Ngày giao hàng
+                  </label>
+                  <input
+                    type="date"
+                    name="deliveryDate"
+                    className="w-full bg-transparent border border-white/50 text-white rounded-md px-3 py-2"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-white text-sm font-medium mb-1">
+                    Ghi chú
+                  </label>
+                  <input
+                    type="text"
+                    name="notes"
+                    className="w-full bg-transparent border border-white/50 text-white placeholder:text-white/70 rounded-md px-3 py-2"
+                    placeholder="Nhập ghi chú (nếu có)"
+                  />
+                </div>
+              </div>
+
+              {error && (
+                <div className="bg-red-500/20 border border-red-500/50 rounded-md p-3">
+                  <p className="text-red-200">{error}</p>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full bg-blue-500 hover:bg-blue-600 text-white rounded-md py-2 px-4 disabled:opacity-50"
+              >
+                {isSubmitting ? "Đang xử lý..." : "Đặt hàng"}
+              </button>
+            </form>
           </div>
         </div>
       </div>

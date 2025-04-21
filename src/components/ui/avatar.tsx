@@ -1,22 +1,22 @@
-import { cn } from "@/core/utils/tailwind.util"
-import Image from "next/image"
+import { cn } from "@/utils/tailwind";
+import Image from "next/image";
 
 interface AvatarProps {
-  src?: string
-  name: string
-  className?: string
+  src?: string;
+  name: string;
+  className?: string;
 }
 
 export function Avatar({ src, name, className }: AvatarProps) {
   const getInitials = (name: string) => {
-    if (!name) return ""
+    if (!name) return "";
     return name
       .split(" ")
       .map((n) => n[0])
       .join("")
       .toUpperCase()
-      .slice(0, 2)
-  }
+      .slice(0, 2);
+  };
 
   return (
     <div
@@ -38,5 +38,5 @@ export function Avatar({ src, name, className }: AvatarProps) {
         </span>
       )}
     </div>
-  )
+  );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { OrderStatistics } from "@/components/order/OrderStatistics";
 import OrderForm from "../components/OrderForm";
 
 export default function Home() {
@@ -9,7 +10,7 @@ export default function Home() {
         <h1 className="text-4xl font-bold text-center mb-8">
           Tiệm Bánh Cúc Quỳ
         </h1>
-        <OrderForm />
+        <OrderStatistics />
       </div>
     </main>
   );

@@ -11,8 +11,45 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useQuery } from "@tanstack/react-query";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+
+interface Order {
+  id: string;
+  customerName: string;
+  product: string;
+  quantity: number;
+  orderDate: string;
+  deliveryDate: string;
+  status: string;
+  total: number;
+}
 
 export function OrderStatistics() {
+  const { data, error, isLoading } = useQuery({
+    queryKey: ["orders"],
+    queryFn: async () => {
+      // TODO: Implement order service
+      return {
+        totalOrders: 150,
+        revenue: 25000000,
+        pendingOrders: 12,
+        orders: [
+          {
+            id: "DH001",
+            customerName: "Nguyễn Văn A",
+            product: "Bánh kem",
+            quantity: 2,
+            orderDate: "21/04/2024",
+            deliveryDate: "22/04/2024",
+            status: "processing",
+            total: 500000,
+          },
+        ] as Order[],
+      };
+    },
+  });
+
   return (
     <div className="fixed inset-0 bg-[url('/background.jpg')] bg-cover bg-center bg-no-repeat bg-fixed">
       <div className="min-h-screen flex items-center justify-center p-4">
@@ -22,6 +59,17 @@ export function OrderStatistics() {
               Thống kê đơn hàng
             </h2>
 
+            {error && (
+              <Alert
+                variant="destructive"
+                className="bg-red-500/20 border-red-500/50 mb-6"
+              >
+                <AlertDescription className="text-red-200">
+                  Không thể tải dữ liệu. Vui lòng thử lại.
+                </AlertDescription>
+              </Alert>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
               <Card className="bg-white/10 border-white/20">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -30,7 +78,9 @@ export function OrderStatistics() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-white">150</div>
+                  <div className="text-2xl font-bold text-white">
+                    {isLoading ? "..." : data?.totalOrders}
+                  </div>
                   <p className="text-xs text-white/70">
                     +20% so với tháng trước
                   </p>
@@ -45,7 +95,7 @@ export function OrderStatistics() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-white">
-                    25.000.000đ
+                    {isLoading ? "..." : `${data?.revenue.toLocaleString()}đ`}
                   </div>
                   <p className="text-xs text-white/70">
                     +15% so với tháng trước
@@ -60,7 +110,9 @@ export function OrderStatistics() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-white">12</div>
+                  <div className="text-2xl font-bold text-white">
+                    {isLoading ? "..." : data?.pendingOrders}
+                  </div>
                   <p className="text-xs text-white/70">Cần giao trong ngày</p>
                 </CardContent>
               </Card>
@@ -78,13 +130,9 @@ export function OrderStatistics() {
                   className="bg-transparent border-white/50 text-white w-[200px]"
                   placeholder="Đến ngày"
                 />
-                <Button className="bg-blue-500 hover:bg-blue-600 text-white">
-                  Lọc
-                </Button>
+                <Button variant="primary">Lọc</Button>
               </div>
-              <Button className="bg-green-500 hover:bg-green-600 text-white">
-                Xuất báo cáo
-              </Button>
+              <Button variant="success">Xuất báo cáo</Button>
             </div>
 
             <div className="overflow-x-auto">
@@ -102,21 +150,42 @@ export function OrderStatistics() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  <TableRow className="border-white/20">
-                    <TableCell className="text-white">DH001</TableCell>
-                    <TableCell className="text-white">Nguyễn Văn A</TableCell>
-                    <TableCell className="text-white">Bánh kem</TableCell>
-                    <TableCell className="text-white">2</TableCell>
-                    <TableCell className="text-white">21/04/2024</TableCell>
-                    <TableCell className="text-white">22/04/2024</TableCell>
-                    <TableCell className="text-white">
-                      <span className="px-2 py-1 bg-yellow-500/20 text-yellow-500 rounded-full text-xs">
-                        Đang xử lý
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-white">500.000đ</TableCell>
-                  </TableRow>
-                  {/* Add more rows as needed */}
+                  {isLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-center text-white">
+                        Đang tải dữ liệu...
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    data?.orders.map((order) => (
+                      <TableRow key={order.id} className="border-white/20">
+                        <TableCell className="text-white">{order.id}</TableCell>
+                        <TableCell className="text-white">
+                          {order.customerName}
+                        </TableCell>
+                        <TableCell className="text-white">
+                          {order.product}
+                        </TableCell>
+                        <TableCell className="text-white">
+                          {order.quantity}
+                        </TableCell>
+                        <TableCell className="text-white">
+                          {order.orderDate}
+                        </TableCell>
+                        <TableCell className="text-white">
+                          {order.deliveryDate}
+                        </TableCell>
+                        <TableCell className="text-white">
+                          <span className="px-2 py-1 bg-yellow-500/20 text-yellow-500 rounded-full text-xs">
+                            Đang xử lý
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-white">
+                          {order.total.toLocaleString()}đ
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </div>
