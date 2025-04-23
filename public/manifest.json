@@ -1,19 +1,19 @@
 {
-  "name": "NQChess",
-  "short_name": "NQChess",
-  "description": "Ứng dụng cờ vua PWA với Next.js",
+  "name": "Cúc Quy Bakery",
+  "short_name": "Cúc Quy",
+  "description": "Ứng dụng quản lý đơn hàng Cúc Quy Bakery",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#000000",
+  "theme_color": "#ffffff",
   "icons": [
     {
-      "src": "/logo/android-chrome-192x192.png",
+      "src": "/pwa-192x192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/logo/android-chrome-512x512.png",
+      "src": "/pwa-512x512.png",
       "sizes": "512x512",
       "type": "image/png"
     }
