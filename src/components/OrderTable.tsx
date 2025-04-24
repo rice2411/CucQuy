@@ -10,8 +10,6 @@ import {
   updateDoc,
   deleteDoc,
   orderBy,
-  limit,
-  startAfter,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { format } from "date-fns";
@@ -44,16 +42,13 @@ interface Order {
 
 export default function OrderTable() {
   const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  /* eslint-disable  @typescript-eslint/no-explicit-any */
-  const [lastVisible, setLastVisible] = useState<any>(null);
-  const [hasMore, setHasMore] = useState(true);
+
   const [allOrders, setAllOrders] = useState<Order[]>([]);
   const itemsPerPage = 10;
 
@@ -103,7 +98,6 @@ export default function OrderTable() {
 
   const fetchOrders = async () => {
     try {
-      setLoading(true);
       const ordersRef = collection(db, "orders");
 
       const baseQuery = query(
@@ -124,8 +118,6 @@ export default function OrderTable() {
       setCurrentPage(1);
     } catch (error) {
       console.error("Error fetching orders:", error);
-    } finally {
-      setLoading(false);
     }
   };
 
