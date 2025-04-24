@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { UserIcon } from "@heroicons/react/24/outline";
 
 const Navbar = () => {
@@ -20,7 +21,14 @@ const Navbar = () => {
           {/* Logo */}
           <div className="flex items-center">
             <Link href="/" className="flex-shrink-0 flex items-center">
-              <img className="h-12 w-auto" src="/logo.jpg" alt="Logo" />
+              <Image
+                className="h-12 w-auto"
+                src="/logo.jpg"
+                alt="Logo"
+                width={48}
+                height={48}
+                priority
+              />
             </Link>
           </div>
 
