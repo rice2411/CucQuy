@@ -20,7 +20,7 @@ const Navbar = () => {
           {/* Logo */}
           <div className="flex items-center">
             <Link href="/" className="flex-shrink-0 flex items-center">
-              <img className="h-8 w-auto" src="/logo.png" alt="Logo" />
+              <img className="h-12 w-auto" src="/logo.jpg" alt="Logo" />
             </Link>
           </div>
 

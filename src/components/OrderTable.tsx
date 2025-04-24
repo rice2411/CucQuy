@@ -25,6 +25,8 @@ import {
   TrashIcon,
   MagnifyingGlassIcon,
 } from "@heroicons/react/24/outline";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 interface Order {
   id: string;
@@ -256,6 +258,7 @@ export default function OrderTable() {
         }),
       });
 
+      toast.success("Tạo đơn hàng thành công!");
       setIsOpen(false);
       setNewOrder({
         customerName: "",
@@ -267,6 +270,7 @@ export default function OrderTable() {
       fetchOrders();
     } catch (error) {
       console.error("Error creating order:", error);
+      toast.error("Có lỗi xảy ra khi tạo đơn hàng!");
     } finally {
       setIsCreating(false);
     }
@@ -295,10 +299,12 @@ export default function OrderTable() {
         )
       );
 
+      toast.success("Cập nhật trạng thái đơn hàng thành công!");
       setIsEditModalOpen(false);
       setSelectedOrder(null);
     } catch (error) {
       console.error("Error updating order status:", error);
+      toast.error("Có lỗi xảy ra khi cập nhật trạng thái đơn hàng!");
     } finally {
       setIsUpdating(false);
     }
@@ -312,10 +318,12 @@ export default function OrderTable() {
       await deleteDoc(orderRef);
 
       setOrders(orders.filter((order) => order.id !== selectedOrder.id));
+      toast.success("Xóa đơn hàng thành công!");
       setIsDeleteModalOpen(false);
       setSelectedOrder(null);
     } catch (error) {
       console.error("Error deleting order:", error);
+      toast.error("Có lỗi xảy ra khi xóa đơn hàng!");
     }
   };
 
@@ -327,6 +335,7 @@ export default function OrderTable() {
 
   return (
     <div className="bg-white shadow rounded-lg">
+      <ToastContainer position="top-right" autoClose={3000} />
       <div className="px-4 py-5 sm:px-6">
         <div className="flex justify-between items-center">
           <h3 className="text-lg font-medium leading-6 text-gray-900">
