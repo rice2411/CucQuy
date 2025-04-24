@@ -35,6 +35,7 @@ interface Order {
   };
   type: "family" | "friendship";
   status: "completed" | "pending" | "cancelled";
+  quantity: number;
   note?: string;
   createdAt: {
     toDate: () => Date;
@@ -61,12 +62,14 @@ export default function OrderTable() {
     phone: string;
     orderDate: string;
     type: "family" | "friendship";
+    quantity: number;
     note: string;
   }>({
     customerName: "",
     phone: "",
     orderDate: "",
     type: "family",
+    quantity: 1,
     note: "",
   });
 
@@ -245,18 +248,18 @@ export default function OrderTable() {
       });
 
       // Gửi email
-      await fetch("/api/send-email", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          orderDetails: {
-            ...newOrder,
-            orderDate: format(new Date(newOrder.orderDate), "dd/MM/yyyy"),
-          },
-        }),
-      });
+      // await fetch("/api/send-email", {
+      //   method: "POST",
+      //   headers: {
+      //     "Content-Type": "application/json",
+      //   },
+      //   body: JSON.stringify({
+      //     orderDetails: {
+      //       ...newOrder,
+      //       orderDate: format(new Date(newOrder.orderDate), "dd/MM/yyyy"),
+      //     },
+      //   }),
+      // });
 
       toast.success("Tạo đơn hàng thành công!");
       setIsOpen(false);
@@ -265,6 +268,7 @@ export default function OrderTable() {
         phone: "",
         orderDate: "",
         type: "family",
+        quantity: 1,
         note: "",
       });
       fetchOrders();
@@ -438,6 +442,9 @@ export default function OrderTable() {
                 Loại set
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Số lượng
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Trạng thái
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -464,6 +471,9 @@ export default function OrderTable() {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {order.type === "family" ? "Gia đình" : "Bạn bè"}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {order.quantity}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span
@@ -679,6 +689,24 @@ export default function OrderTable() {
                     className="block w-full p-2 rounded-lg border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
                   />
                 </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2 sm:mb-3">
+                    Số lượng
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={newOrder.quantity}
+                    onChange={(e) =>
+                      setNewOrder({
+                        ...newOrder,
+                        quantity: parseInt(e.target.value) || 1,
+                      })
+                    }
+                    className="block w-full p-2 rounded-lg border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                  />
+                </div>
               </div>
 
               <div className="space-y-4 sm:space-y-8">
@@ -773,9 +801,7 @@ export default function OrderTable() {
                       {selectedOrder.phone}
                     </p>
                   </div>
-                </div>
 
-                <div className="space-y-4 sm:space-y-8">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2 sm:mb-3">
                       Ngày đặt
@@ -787,6 +813,17 @@ export default function OrderTable() {
                     </p>
                   </div>
 
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2 sm:mb-3">
+                      Số lượng
+                    </label>
+                    <p className="mt-1 text-sm text-gray-900 p-2 bg-gray-50 rounded-lg">
+                      {selectedOrder.quantity}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-4 sm:space-y-8">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2 sm:mb-3">
                       Trạng thái
