@@ -110,8 +110,7 @@ export default function OrderTable() {
         ordersRef,
         orderBy("createdAt", "desc"),
         orderBy("orderDate", "desc"),
-        orderBy("__name__", "desc"),
-        limit(itemsPerPage)
+        orderBy("__name__", "desc")
       );
 
       const snapshot = await getDocs(baseQuery);
@@ -122,8 +121,7 @@ export default function OrderTable() {
 
       setAllOrders(fetchedOrders);
       setOrders(fetchedOrders);
-      setLastVisible(snapshot.docs[snapshot.docs.length - 1]);
-      setHasMore(snapshot.docs.length === itemsPerPage);
+      setCurrentPage(1);
     } catch (error) {
       console.error("Error fetching orders:", error);
     } finally {
@@ -137,11 +135,13 @@ export default function OrderTable() {
 
     // Lọc theo ngày
     if (filters.dateFrom && filters.dateTo) {
-      const startDate = new Date(filters.dateFrom);
-      startDate.setHours(0, 0, 0, 0);
+      const [fromDay, fromMonth, fromYear] = filters.dateFrom
+        .split("/")
+        .map(Number);
+      const [toDay, toMonth, toYear] = filters.dateTo.split("/").map(Number);
 
-      const endDate = new Date(filters.dateTo);
-      endDate.setHours(23, 59, 59, 999);
+      const startDate = new Date(fromYear, fromMonth - 1, fromDay, 0, 0, 0);
+      const endDate = new Date(toYear, toMonth - 1, toDay, 23, 59, 59);
 
       resultOrders = resultOrders.filter((order) => {
         const orderDate = order.orderDate.toDate();
@@ -172,94 +172,37 @@ export default function OrderTable() {
     setIsSearching(false);
   };
 
-  const loadMore = async () => {
-    if (!lastVisible || !hasMore) return;
-
-    try {
-      setLoading(true);
-      const ordersRef = collection(db, "orders");
-      const nextQuery = query(
-        ordersRef,
-        orderBy("createdAt", "desc"),
-        orderBy("orderDate", "desc"),
-        orderBy("__name__", "desc"),
-        startAfter(lastVisible),
-        limit(itemsPerPage)
-      );
-
-      const snapshot = await getDocs(nextQuery);
-      const fetchedOrders = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as Order[];
-
-      // Lọc dữ liệu ở phía client
-      let filteredOrders = fetchedOrders;
-
-      // Lọc theo ngày
-      if (filters.dateFrom && filters.dateTo) {
-        const startDate = new Date(filters.dateFrom);
-        startDate.setHours(0, 0, 0, 0);
-
-        const endDate = new Date(filters.dateTo);
-        endDate.setHours(23, 59, 59, 999);
-
-        filteredOrders = filteredOrders.filter((order) => {
-          const orderDate = order.orderDate.toDate();
-          return orderDate >= startDate && orderDate <= endDate;
-        });
-      }
-
-      // Lọc theo loại set
-      if (filters.type !== "all") {
-        filteredOrders = filteredOrders.filter(
-          (order) => order.type === filters.type
-        );
-      }
-
-      // Tìm kiếm theo tên hoặc số điện thoại
-      if (filters.searchTerm) {
-        const searchLower = filters.searchTerm.toLowerCase();
-        filteredOrders = filteredOrders.filter(
-          (order) =>
-            order.customerName.toLowerCase().includes(searchLower) ||
-            order.phone.includes(filters.searchTerm)
-        );
-      }
-
-      setOrders((prev) => [...prev, ...filteredOrders]);
-      setLastVisible(snapshot.docs[snapshot.docs.length - 1]);
-      setHasMore(snapshot.docs.length === itemsPerPage);
-    } catch (error) {
-      console.error("Error loading more orders:", error);
-    } finally {
-      setLoading(false);
-    }
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleCreateOrder = async () => {
     try {
       setIsCreating(true);
+      const [day, month, year] = newOrder.orderDate.split("/").map(Number);
+      const orderDate = new Date(year, month - 1, day);
+
       await addDoc(collection(db, "orders"), {
         ...newOrder,
-        orderDate: new Date(newOrder.orderDate),
-        status: "pending",
+        orderDate: orderDate,
+        status: "completed",
         createdAt: new Date(),
       });
 
       // Gửi email
-      // await fetch("/api/send-email", {
-      //   method: "POST",
-      //   headers: {
-      //     "Content-Type": "application/json",
-      //   },
-      //   body: JSON.stringify({
-      //     orderDetails: {
-      //       ...newOrder,
-      //       orderDate: format(new Date(newOrder.orderDate), "dd/MM/yyyy"),
-      //     },
-      //   }),
-      // });
+      await fetch("/api/send-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          orderDetails: {
+            ...newOrder,
+            orderDate: format(new Date(newOrder.orderDate), "dd/MM/yyyy"),
+          },
+        }),
+      });
 
       toast.success("Tạo đơn hàng thành công!");
       setIsOpen(false);
@@ -358,11 +301,16 @@ export default function OrderTable() {
               Từ ngày
             </label>
             <input
-              type="date"
+              type="text"
               value={filters.dateFrom}
-              onChange={(e) =>
-                setFilters({ ...filters, dateFrom: e.target.value })
-              }
+              onChange={(e) => {
+                const value = e.target.value;
+                // Chỉ cho phép nhập số và dấu /
+                if (/^[\d/]*$/.test(value)) {
+                  setFilters({ ...filters, dateFrom: value });
+                }
+              }}
+              placeholder="dd/mm/yyyy"
               className="mt-1 block p-2 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
             />
           </div>
@@ -371,11 +319,16 @@ export default function OrderTable() {
               Đến ngày
             </label>
             <input
-              type="date"
+              type="text"
               value={filters.dateTo}
-              onChange={(e) =>
-                setFilters({ ...filters, dateTo: e.target.value })
-              }
+              onChange={(e) => {
+                const value = e.target.value;
+                // Chỉ cho phép nhập số và dấu /
+                if (/^[\d/]*$/.test(value)) {
+                  setFilters({ ...filters, dateTo: value });
+                }
+              }}
+              placeholder="dd/mm/yyyy"
               className="mt-1 p-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
             />
           </div>
@@ -525,16 +478,14 @@ export default function OrderTable() {
       <div className="px-4 py-3 sm:px-6 flex items-center justify-between border-t border-gray-200">
         <div className="flex-1 flex justify-between sm:hidden">
           <button
-            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            onClick={() => handlePageChange(currentPage - 1)}
             disabled={currentPage === 1}
             className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
           >
             Trang trước
           </button>
           <button
-            onClick={() =>
-              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-            }
+            onClick={() => handlePageChange(currentPage + 1)}
             disabled={currentPage === totalPages}
             className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
           >
@@ -557,7 +508,7 @@ export default function OrderTable() {
               aria-label="Pagination"
             >
               <button
-                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
                 className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
               >
@@ -580,7 +531,7 @@ export default function OrderTable() {
                 (page) => (
                   <button
                     key={page}
-                    onClick={() => setCurrentPage(page)}
+                    onClick={() => handlePageChange(page)}
                     className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
                       currentPage === page
                         ? "z-10 bg-indigo-50 border-indigo-500 text-indigo-600"
@@ -592,9 +543,7 @@ export default function OrderTable() {
                 )
               )}
               <button
-                onClick={() =>
-                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                }
+                onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
                 className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
               >
@@ -617,19 +566,6 @@ export default function OrderTable() {
           </div>
         </div>
       </div>
-
-      {/* Load More Button */}
-      {hasMore && (
-        <div className="px-4 py-3 sm:px-6 text-center">
-          <button
-            onClick={loadMore}
-            disabled={loading}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-          >
-            {loading ? "Đang tải..." : "Tải thêm"}
-          </button>
-        </div>
-      )}
 
       {/* Create Order Modal */}
       <Dialog
@@ -681,11 +617,16 @@ export default function OrderTable() {
                     Ngày đặt
                   </label>
                   <input
-                    type="date"
+                    type="text"
                     value={newOrder.orderDate}
-                    onChange={(e) =>
-                      setNewOrder({ ...newOrder, orderDate: e.target.value })
-                    }
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      // Chỉ cho phép nhập số và dấu /
+                      if (/^[\d/]*$/.test(value)) {
+                        setNewOrder({ ...newOrder, orderDate: value });
+                      }
+                    }}
+                    placeholder="dd/mm/yyyy"
                     className="block w-full p-2 rounded-lg border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
                   />
                 </div>
