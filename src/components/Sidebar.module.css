@@ -1,0 +1,48 @@
+.sidebar {
+  height: 100vh;
+  width: 260px;
+  background-color: #f9fafb;
+  border-right: 1px solid #d1d5db;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 20px 24px;
+  transition: width 0.3s ease;
+}
+
+.sidebarItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.sidebarItem:hover {
+  background-color: #e5e7eb;
+}
+
+.sidebarItemActive {
+  background-color: #e5e7eb;
+}
+
+.logo {
+  color: #db551b;
+}
+
+.logoText {
+  font-weight: 800;
+  font-size: 22px;
+  line-height: 1.2em;
+  color: #db551b;
+}
+
+.profileSection {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 12px;
+  margin-top: auto;
+}

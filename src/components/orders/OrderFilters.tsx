@@ -91,27 +91,30 @@ const OrderFilters: React.FC<OrderFiltersProps> = ({
               }
               placeholder="Tên hoặc số điện thoại"
             />
-            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1">
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                onClick={onSearch}
-                disabled={isSearching}
-              >
-                <Search className="h-4 w-4" />
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                onClick={onReset}
-                disabled={isSearching}
-              >
-                Reset
-              </Button>
-            </div>
+            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1"></div>
           </div>
+        </div>
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            size="icon"
+            variant="default"
+            onClick={onSearch}
+            disabled={isSearching}
+            className="w-full"
+          >
+            Tìm kiếm
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={onReset}
+            disabled={isSearching}
+            className="w-full"
+          >
+            Đăt lại
+          </Button>
         </div>
       </div>
     </div>

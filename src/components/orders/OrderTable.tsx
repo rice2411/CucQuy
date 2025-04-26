@@ -47,6 +47,17 @@ export default function OrderTable() {
     note: "",
   });
 
+  // Thêm state cho form cập nhật
+  const [updateFormData, setUpdateFormData] = useState<OrderFormData>({
+    customerName: "",
+    phone: "",
+    orderDate: "",
+    type: "family",
+    quantity: 1,
+    note: "",
+    status: "completed",
+  });
+
   const getFirstDayOfMonth = () => {
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth(), 1, 7, 0, 0)
@@ -71,6 +82,22 @@ export default function OrderTable() {
   useEffect(() => {
     fetchOrders();
   }, []);
+
+  // Cập nhật updateFormData khi selectedOrder thay đổi
+  useEffect(() => {
+    if (selectedOrder) {
+      const orderDate = selectedOrder.orderDate.toDate();
+      setUpdateFormData({
+        customerName: selectedOrder.customerName,
+        phone: selectedOrder.phone,
+        orderDate: format(orderDate, "yyyy-MM-dd"),
+        type: selectedOrder.type,
+        quantity: selectedOrder.quantity,
+        note: selectedOrder.note || "",
+        status: selectedOrder.status,
+      });
+    }
+  }, [selectedOrder]);
 
   const fetchOrders = async () => {
     try {
@@ -188,6 +215,61 @@ export default function OrderTable() {
     }
   };
 
+  // Thêm hàm xử lý cập nhật đơn hàng
+  const handleUpdateOrder = async (formData: OrderFormData) => {
+    if (!selectedOrder) return;
+
+    try {
+      setIsUpdating(true);
+
+      // Chuyển đổi ngày tháng từ string sang Date object
+      const orderDate = new Date(formData.orderDate);
+      orderDate.setHours(7, 0, 0, 0); // Đặt giờ về 7:00 AM
+
+      const orderRef = doc(db, "orders", selectedOrder.id);
+      await updateDoc(orderRef, {
+        customerName: formData.customerName,
+        phone: formData.phone,
+        orderDate: orderDate,
+        type: formData.type,
+        quantity: formData.quantity,
+        note: formData.note,
+        status: formData.status,
+      });
+
+      setOrders(
+        orders.map((order) =>
+          order.id === selectedOrder.id
+            ? {
+                ...order,
+                customerName: formData.customerName,
+                phone: formData.phone,
+                orderDate: {
+                  toDate: () => orderDate,
+                },
+                type: formData.type,
+                quantity: formData.quantity,
+                note: formData.note,
+                status: formData.status as
+                  | "completed"
+                  | "pending"
+                  | "cancelled",
+              }
+            : order
+        )
+      );
+
+      toast.success("Cập nhật đơn hàng thành công!");
+      setIsEditModalOpen(false);
+      setSelectedOrder(null);
+    } catch (error) {
+      console.error("Error updating order:", error);
+      toast.error("Có lỗi xảy ra khi cập nhật đơn hàng!");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   const handleStatusUpdate = async () => {
     if (!selectedOrder) return;
 
@@ -241,9 +323,8 @@ export default function OrderTable() {
   const currentOrders = orders.slice(startIndex, endIndex);
 
   return (
-    <div className="bg-white shadow rounded-lg">
-      <ToastContainer position="top-right" autoClose={3000} />
-      <div className="px-4 py-5 sm:px-6">
+    <div className="">
+      <div className="  ">
         <div className="flex justify-between items-center">
           <h3 className="text-lg font-medium leading-6 text-gray-900">
             Danh sách đơn hàng
@@ -360,6 +441,7 @@ export default function OrderTable() {
         onPageChange={handlePageChange}
       />
 
+      {/* Form tạo đơn hàng mới */}
       <OrderForm
         isOpen={isOpen}
         onClose={() => setIsOpen(false)}
@@ -370,6 +452,22 @@ export default function OrderTable() {
         submitText="Tạo đơn hàng"
       />
 
+      {/* Form cập nhật đơn hàng */}
+      <OrderForm
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setSelectedOrder(null);
+        }}
+        onSubmit={handleUpdateOrder}
+        initialData={updateFormData}
+        isSubmitting={isUpdating}
+        title="Cập nhật đơn hàng"
+        submitText="Cập nhật"
+        isUpdate={true}
+      />
+
+      {/* Modal xác nhận xóa */}
       <OrderModal
         isOpen={isDeleteModalOpen}
         onClose={() => {
@@ -383,6 +481,8 @@ export default function OrderTable() {
         confirmText="Xóa"
         cancelText="Hủy"
       />
+
+      <ToastContainer position="bottom-right" />
     </div>
   );
 }

@@ -26,6 +26,7 @@ interface OrderFormProps {
   isSubmitting: boolean;
   title: string;
   submitText: string;
+  isUpdate?: boolean;
 }
 
 const OrderForm: React.FC<OrderFormProps> = ({
@@ -39,10 +40,12 @@ const OrderForm: React.FC<OrderFormProps> = ({
     type: "family",
     quantity: 1,
     note: "",
+    status: "completed",
   },
   isSubmitting,
   title,
   submitText,
+  isUpdate = false,
 }) => {
   const [formData, setFormData] = React.useState<OrderFormData>(initialData);
 
@@ -118,6 +121,29 @@ const OrderForm: React.FC<OrderFormProps> = ({
               </SelectContent>
             </Select>
           </div>
+          {isUpdate && (
+            <div className="grid gap-2">
+              <Label htmlFor="status">Trạng thái</Label>
+              <Select
+                value={formData.status}
+                onValueChange={(value) =>
+                  setFormData({
+                    ...formData,
+                    status: value as "completed" | "pending" | "cancelled",
+                  })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Chọn trạng thái" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="completed">Hoàn thành</SelectItem>
+                  <SelectItem value="pending">Đang xử lý</SelectItem>
+                  <SelectItem value="cancelled">Đã hủy</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div className="grid gap-2">
             <Label htmlFor="quantity">Số lượng</Label>
             <Input

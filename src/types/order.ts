@@ -21,4 +21,5 @@ export interface OrderFormData {
   type: "family" | "friendship" | "gift";
   quantity: number;
   note: string;
+  status?: "completed" | "pending" | "cancelled";
 }
