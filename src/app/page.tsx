@@ -1,4 +1,4 @@
-import OrderTable from "@/components/OrderTable";
+import OrderTable from "@/components/orders/OrderTable";
 
 export default function Home() {
   return (

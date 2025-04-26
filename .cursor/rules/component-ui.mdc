@@ -1,0 +1,6 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+If create new componet please make sure use ui from src\components\ui
