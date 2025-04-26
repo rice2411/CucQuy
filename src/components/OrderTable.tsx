@@ -13,7 +13,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { format } from "date-fns";
-import { vi } from "date-fns/locale/vi";
+import { vi } from "date-fns/locale";
 import { Dialog } from "@headlessui/react";
 import {
   PlusIcon,
@@ -31,7 +31,7 @@ interface Order {
   orderDate: {
     toDate: () => Date;
   };
-  type: "family" | "friendship";
+  type: "family" | "friendship" | "gift";
   status: "completed" | "pending" | "cancelled";
   quantity: number;
   note?: string;
@@ -56,7 +56,7 @@ export default function OrderTable() {
     customerName: string;
     phone: string;
     orderDate: string;
-    type: "family" | "friendship";
+    type: "family" | "friendship" | "gift";
     quantity: number;
     note: string;
   }>({
@@ -124,16 +124,11 @@ export default function OrderTable() {
   const handleSearch = () => {
     setIsSearching(true);
     let resultOrders = [...allOrders];
-
     // Lọc theo ngày
     if (filters.dateFrom && filters.dateTo) {
-      const [fromDay, fromMonth, fromYear] = filters.dateFrom
-        .split("/")
-        .map(Number);
-      const [toDay, toMonth, toYear] = filters.dateTo.split("/").map(Number);
-
-      const startDate = new Date(fromYear, fromMonth - 1, fromDay, 0, 0, 0);
-      const endDate = new Date(toYear, toMonth - 1, toDay, 23, 59, 59);
+      const startDate = new Date(filters.dateFrom);
+      const endDate = new Date(filters.dateTo);
+      endDate.setHours(23, 59, 59, 999); // Đặt thời gian cuối ngày
 
       resultOrders = resultOrders.filter((order) => {
         const orderDate = order.orderDate.toDate();
@@ -293,14 +288,11 @@ export default function OrderTable() {
               Từ ngày
             </label>
             <input
-              type="text"
+              type="date"
               value={filters.dateFrom}
               onChange={(e) => {
                 const value = e.target.value;
-                // Chỉ cho phép nhập số và dấu /
-                if (/^[\d/]*$/.test(value)) {
-                  setFilters({ ...filters, dateFrom: value });
-                }
+                setFilters({ ...filters, dateFrom: value });
               }}
               placeholder="dd/mm/yyyy"
               className="mt-1 block p-2 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
@@ -311,14 +303,11 @@ export default function OrderTable() {
               Đến ngày
             </label>
             <input
-              type="text"
+              type="date"
               value={filters.dateTo}
               onChange={(e) => {
                 const value = e.target.value;
-                // Chỉ cho phép nhập số và dấu /
-                if (/^[\d/]*$/.test(value)) {
-                  setFilters({ ...filters, dateTo: value });
-                }
+                setFilters({ ...filters, dateTo: value });
               }}
               placeholder="dd/mm/yyyy"
               className="mt-1 p-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
@@ -415,7 +404,11 @@ export default function OrderTable() {
                   })}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {order.type === "family" ? "Gia đình" : "Bạn bè"}
+                  {order.type === "family"
+                    ? "Gia đình"
+                    : order.type === "friendship"
+                    ? "Bạn bè"
+                    : "Quà tặng"}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {order.quantity}
@@ -609,16 +602,11 @@ export default function OrderTable() {
                     Ngày đặt
                   </label>
                   <input
-                    type="text"
+                    type="date"
                     value={newOrder.orderDate}
                     onChange={(e) => {
-                      const value = e.target.value;
-                      // Chỉ cho phép nhập số và dấu /
-                      if (/^[\d/]*$/.test(value)) {
-                        setNewOrder({ ...newOrder, orderDate: value });
-                      }
+                      setNewOrder({ ...newOrder, orderDate: e.target.value });
                     }}
-                    placeholder="dd/mm/yyyy"
                     className="block w-full p-2 rounded-lg border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
                   />
                 </div>
@@ -652,13 +640,17 @@ export default function OrderTable() {
                     onChange={(e) =>
                       setNewOrder({
                         ...newOrder,
-                        type: e.target.value as "family" | "friendship",
+                        type: e.target.value as
+                          | "family"
+                          | "friendship"
+                          | "gift",
                       })
                     }
                     className="block w-full p-2 rounded-lg border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
                   >
                     <option value="family">Gia đình</option>
                     <option value="friendship">Bạn bè</option>
+                    <option value="gift">Quà tặng</option>
                   </select>
                 </div>
 
