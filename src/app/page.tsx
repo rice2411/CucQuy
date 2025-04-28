@@ -1,9 +1,5 @@
-import OrderTable from "@/modules/orders/components/OrderTable";
+import { redirect } from "next/navigation";
 
 export default function Home() {
-  return (
-    <>
-      <OrderTable />
-    </>
-  );
+  redirect("/orders");
 }

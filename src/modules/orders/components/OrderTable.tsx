@@ -52,7 +52,7 @@ const OrderTable: React.FC = () => {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const [allOrders, setAllOrders] = useState<Order[]>([]);
-  const itemsPerPage = 10;
+  const itemsPerPage = 20;
 
   const [newOrder, setNewOrder] = useState<OrderFormData>({
     customerName: "",
