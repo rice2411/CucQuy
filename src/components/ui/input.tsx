@@ -1,5 +1,5 @@
 import * as React from "react";
-import { cn } from "@/core/lib/utils";
+import { cn } from "@/core/utils/tailwind";
 import Image from "next/image";
 
 export interface InputProps

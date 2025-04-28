@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { OrderType, OrderStatus } from "../enums/order";
 import { OrderFormData } from "@/modules/orders/types/order";
+import { getToday } from "../../../core/utils/date.util";
 
 interface OrderFormProps {
   isOpen: boolean;
@@ -37,27 +38,39 @@ const OrderForm: React.FC<OrderFormProps> = ({
   initialData = {
     customerName: "",
     phone: "",
-    orderDate: "",
+    orderDate: getToday(),
     type: OrderType.Family,
     quantity: 1,
     note: "",
-    status: OrderStatus.Completed,
+    status: OrderStatus.Pending,
   },
   isSubmitting,
   title,
   submitText,
   isUpdate = false,
 }) => {
-  const [formData, setFormData] = React.useState<OrderFormData>(initialData);
+  const [formData, setFormData] = React.useState<OrderFormData>({
+    ...initialData,
+    orderDate: initialData.orderDate || getToday(),
+  });
 
   React.useEffect(() => {
-    setFormData(initialData);
+    setFormData({
+      ...initialData,
+      orderDate: initialData.orderDate || getToday(),
+    });
   }, [initialData]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit(formData);
   };
+
+  const isFormValid =
+    formData.customerName.trim() !== "" &&
+    formData.orderDate &&
+    formData.type &&
+    formData.quantity > 0;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -180,7 +193,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
             <Button type="button" variant="outline" onClick={onClose}>
               Hủy
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting || !isFormValid}>
               {isSubmitting ? "Đang xử lý..." : submitText}
             </Button>
           </DialogFooter>

@@ -14,45 +14,39 @@ import { Button } from "@/components/ui/button";
 
 import OrderTableToolbar from "./OrderTableToolbar";
 import OrderTableBody from "./OrderTableBody";
-import {
-  fetchOrders,
-  createOrder,
-  updateOrder,
-  deleteOrder,
-} from "../services/orderService";
-import OrderCard from "./OrderCard";
-import { notifyTelegram } from "@/core/services/telegramService";
-import { buildOrderTelegramMessage } from "@/core/utils/orderTelegramTemplate";
-import { OrderType, OrderStatus } from "../enums/order";
 
-const useIsMobile = () => {
-  const [isMobile, setIsMobile] = React.useState(false);
-  React.useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 768);
-    check();
-    window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
-  }, []);
-  return isMobile;
-};
+import OrderCard from "./OrderCard";
+import { notifyTelegram } from "@/core/services/telegram.service";
+import { buildOrderTelegramMessage } from "@/core/utils/telegram.util";
+import { OrderType, OrderStatus } from "../enums/order";
+import { useIsMobile } from "../hooks/useIsMobile";
+import { useOrderFilter } from "../hooks/useOrderFilter";
+import { OrderService } from "../services/order.service";
 
 /**
  * Hiển thị bảng danh sách đơn hàng với các thao tác CRUD, filter, phân trang.
  * UI tuân thủ chuẩn component-ui, sử dụng các component từ src/components/ui.
  */
 const OrderTable: React.FC = () => {
-  const [orders, setOrders] = useState<Order[]>([]);
   const [isOpen, setIsOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-
   const [allOrders, setAllOrders] = useState<Order[]>([]);
   const itemsPerPage = 20;
+  const {
+    orders,
+    filters,
+    setFilters,
+    currentPage,
+    setCurrentPage,
+    setOrders,
+  } = useOrderFilter(allOrders);
+
+  const [loading, setLoading] = useState(true);
 
   const [newOrder, setNewOrder] = useState<OrderFormData>({
     customerName: "",
@@ -74,38 +68,19 @@ const OrderTable: React.FC = () => {
     status: OrderStatus.Completed,
   });
 
-  const [loading, setLoading] = useState(true);
-
-  const getFirstDayOfMonth = () => {
-    const now = new Date();
-    return new Date(now.getFullYear(), now.getMonth(), 1, 7, 0, 0)
-      .toISOString()
-      .split("T")[0];
-  };
-
-  const getLastDayOfMonth = () => {
-    const now = new Date();
-    return new Date(now.getFullYear(), now.getMonth() + 1, 0, 7, 0, 0)
-      .toISOString()
-      .split("T")[0];
-  };
-
-  const [filters, setFilters] = useState({
-    dateFrom: getFirstDayOfMonth(),
-    dateTo: getLastDayOfMonth(),
-    type: "all",
-    searchTerm: "",
-  });
-
   const isMobile = useIsMobile();
 
   useEffect(() => {
     setLoading(true);
-    fetchOrders()
+    OrderService.fetchOrders()
       .then((fetchedOrders) => {
-        setAllOrders(fetchedOrders);
-        setOrders(fetchedOrders);
-        setCurrentPage(1);
+        if (fetchedOrders.success) {
+          setAllOrders(fetchedOrders.data as Order[]);
+          setOrders(fetchedOrders.data as Order[]);
+          setCurrentPage(1);
+        } else {
+          console.error("Error fetching orders:", fetchedOrders.errorCode);
+        }
       })
       .catch((error) => {
         console.error("Error fetching orders:", error);
@@ -137,7 +112,7 @@ const OrderTable: React.FC = () => {
   const handleCreateOrder = async (formData: OrderFormData) => {
     try {
       setIsCreating(true);
-      await createOrder(formData);
+      await OrderService.createOrder(formData);
       await notifyTelegram(buildOrderTelegramMessage(formData, "create"));
       toast.success("Tạo đơn hàng thành công!");
       setIsOpen(false);
@@ -150,10 +125,14 @@ const OrderTable: React.FC = () => {
         note: "",
       });
       // Refetch orders
-      const fetchedOrders = await fetchOrders();
-      setAllOrders(fetchedOrders);
-      setOrders(fetchedOrders);
-      setCurrentPage(1);
+      const fetchedOrders = await OrderService.fetchOrders();
+      if (fetchedOrders.success) {
+        setAllOrders(fetchedOrders.data as Order[]);
+        setOrders(fetchedOrders.data as Order[]);
+        setCurrentPage(1);
+      } else {
+        console.error("Error fetching orders:", fetchedOrders.errorCode);
+      }
     } catch (error) {
       console.error("Error creating order:", error);
       toast.error("Có lỗi xảy ra khi tạo đơn hàng!");
@@ -167,12 +146,17 @@ const OrderTable: React.FC = () => {
     if (!selectedOrder) return;
     try {
       setIsUpdating(true);
-      await updateOrder(selectedOrder.id, formData);
+      await OrderService.updateOrder(selectedOrder.id, formData);
       await notifyTelegram(buildOrderTelegramMessage(formData, "update"));
       // Refetch orders
-      const fetchedOrders = await fetchOrders();
-      setAllOrders(fetchedOrders);
-      setOrders(fetchedOrders);
+      const fetchedOrders = await OrderService.fetchOrders();
+      if (fetchedOrders.success) {
+        setAllOrders(fetchedOrders.data as Order[]);
+        setOrders(fetchedOrders.data as Order[]);
+        setCurrentPage(1);
+      } else {
+        console.error("Error fetching orders:", fetchedOrders.errorCode);
+      }
       setCurrentPage(1);
       toast.success("Cập nhật đơn hàng thành công!");
       setIsEditModalOpen(false);
@@ -189,13 +173,17 @@ const OrderTable: React.FC = () => {
     if (!selectedOrder) return;
     try {
       setIsDeleting(true);
-      await deleteOrder(selectedOrder.id);
+      await OrderService.deleteOrder(selectedOrder.id);
       await notifyTelegram(buildOrderTelegramMessage(selectedOrder, "delete"));
       // Refetch orders
-      const fetchedOrders = await fetchOrders();
-      setAllOrders(fetchedOrders);
-      setOrders(fetchedOrders);
-      setCurrentPage(1);
+      const fetchedOrders = await OrderService.fetchOrders();
+      if (fetchedOrders.success) {
+        setAllOrders(fetchedOrders.data as Order[]);
+        setOrders(fetchedOrders.data as Order[]);
+        setCurrentPage(1);
+      } else {
+        console.error("Error fetching orders:", fetchedOrders.errorCode);
+      }
       toast.success("Xóa đơn hàng thành công!");
       setIsDeleteModalOpen(false);
       setSelectedOrder(null);

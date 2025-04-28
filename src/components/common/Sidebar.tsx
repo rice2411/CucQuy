@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { cn } from "@/core/lib/utils";
+import { cn } from "@/core/utils/tailwind";
 import { usePathname } from "next/navigation";
 
 interface SidebarItemProps {

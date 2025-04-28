@@ -9,19 +9,13 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { Order } from "@/modules/orders/types/order";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import {
-  Dialog,
-  DialogTrigger,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogClose,
-} from "@/components/ui/dialog";
-import { FunnelIcon } from "@heroicons/react/24/outline";
+
 import { OrderType, OrderStatus } from "../enums/order";
+import {
+  getFirstDayOfMonth,
+  getLastDayOfMonth,
+  getMonthOptions,
+} from "../../../core/utils/date.util";
 
 interface OrderTableToolbarProps {
   filters: {
@@ -36,19 +30,7 @@ interface OrderTableToolbarProps {
   setCurrentPage: (page: number) => void;
 }
 
-// Hàm tiện ích cho filter
-const getFirstDayOfMonth = () => {
-  const now = new Date();
-  return new Date(now.getFullYear(), now.getMonth(), 1, 7, 0, 0)
-    .toISOString()
-    .split("T")[0];
-};
-const getLastDayOfMonth = () => {
-  const now = new Date();
-  return new Date(now.getFullYear(), now.getMonth() + 1, 0, 7, 0, 0)
-    .toISOString()
-    .split("T")[0];
-};
+const monthOptions = getMonthOptions(new Date(2025, 2, 1), new Date());
 
 const statusOptions = [
   { value: "all", label: "Tất cả" },
@@ -64,24 +46,29 @@ const OrderTableToolbar: React.FC<OrderTableToolbarProps> = ({
   setOrders,
   setCurrentPage,
 }) => {
-  const [enableDateFilter, setEnableDateFilter] = React.useState(false);
   const [status, setStatus] = React.useState("all");
   const [type, setType] = React.useState(filters.type);
-  const [open, setOpen] = React.useState(false);
   const [searchTerm, setSearchTerm] = React.useState(filters.searchTerm);
+  const [selectedMonth, setSelectedMonth] = React.useState(() => {
+    if (filters.dateFrom && filters.dateTo) {
+      const d = new Date(filters.dateFrom);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    }
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(
+      2,
+      "0"
+    )}`;
+  });
 
-  // Xác định có filter nào đang bật không
-  const isFilterOn =
-    enableDateFilter || type !== "all" || status !== "all" || searchTerm !== "";
-
-  // Hàm lọc dữ liệu
-  const handleSearch = () => {
+  // Hàm lọc dữ liệu (tự động gọi khi thay đổi trường)
+  React.useEffect(() => {
     let resultOrders = [...allOrders];
-    // Lọc theo ngày nếu enableDateFilter bật
-    if (enableDateFilter && filters.dateFrom && filters.dateTo) {
-      const startDate = new Date(filters.dateFrom);
-      const endDate = new Date(filters.dateTo);
-      endDate.setHours(23, 59, 59, 999);
+    // Lọc theo tháng
+    if (selectedMonth) {
+      const [year, month] = selectedMonth.split("-").map(Number);
+      const startDate = new Date(year, month - 1, 1, 0, 0, 0, 0);
+      const endDate = new Date(year, month, 0, 23, 59, 59, 999);
       resultOrders = resultOrders.filter((order) => {
         const orderDate = order.orderDate.toDate();
         return orderDate >= startDate && orderDate <= endDate;
@@ -106,152 +93,95 @@ const OrderTableToolbar: React.FC<OrderTableToolbarProps> = ({
     }
     setOrders(resultOrders);
     setCurrentPage(1);
+    // Cập nhật filters cho cha
+    const [year, month] = selectedMonth.split("-").map(Number);
     onFiltersChange({
       ...filters,
       searchTerm,
       type,
-      dateFrom: filters.dateFrom,
-      dateTo: filters.dateTo,
+      dateFrom: getFirstDayOfMonth(year, month - 1),
+      dateTo: getLastDayOfMonth(year, month - 1),
     });
-    setOpen(false);
-  };
+  }, [searchTerm, type, status, selectedMonth]);
 
   // Hàm reset filter
   const handleReset = () => {
+    const now = new Date();
+    const resetMonth = `${now.getFullYear()}-${String(
+      now.getMonth() + 1
+    ).padStart(2, "0")}`;
     const resetFilters = {
       ...filters,
       searchTerm: "",
       type: "all",
-      dateFrom: getFirstDayOfMonth(),
-      dateTo: getLastDayOfMonth(),
+      dateFrom: getFirstDayOfMonth(now.getFullYear(), now.getMonth()),
+      dateTo: getLastDayOfMonth(now.getFullYear(), now.getMonth()),
     };
     onFiltersChange(resetFilters);
     setOrders(allOrders);
     setCurrentPage(1);
-    setEnableDateFilter(false);
     setStatus("all");
     setType("all");
     setSearchTerm("");
-    setOpen(false);
+    setSelectedMonth(resetMonth);
   };
 
   return (
-    <div className="flex flex-row items-end gap-2 mb-4 w-full">
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger asChild>
-          <Button
-            variant="outline"
-            className={`flex items-center gap-2 border-2 transition-colors ${
-              isFilterOn
-                ? "border-[var(--primary)] text-[var(--primary)]"
-                : "border-gray-200 text-gray-700"
-            }`}
-          >
-            <FunnelIcon
-              className={`w-4 h-4 transition-colors ${
-                isFilterOn ? "text-[var(--primary)]" : "text-gray-400"
-              }`}
-            />{" "}
-            Bộ lọc
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="max-w-md w-full">
-          <DialogHeader>
-            <DialogTitle>Bộ lọc </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            {/* Search text */}
-            <div className="flex flex-col gap-1">
-              <Label className="text-xs mb-1">
-                Tìm kiếm tên hoặc số điện thoại
-              </Label>
-              <Input
-                placeholder="Nhập tên hoặc số điện thoại..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full"
-              />
-            </div>
-            {/* Lọc theo ngày */}
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  checked={enableDateFilter}
-                  onCheckedChange={setEnableDateFilter}
-                  id="enable-date-filter"
-                />
-                <Label htmlFor="enable-date-filter" className="text-xs">
-                  Lọc theo ngày
-                </Label>
-              </div>
-              {enableDateFilter && (
-                <div className="flex gap-2 w-full">
-                  <Input
-                    type="date"
-                    value={filters.dateFrom}
-                    onChange={(e) =>
-                      onFiltersChange({ ...filters, dateFrom: e.target.value })
-                    }
-                    className="w-full"
-                    placeholder="Từ ngày"
-                  />
-                  <span className="text-gray-400 self-center">-</span>
-                  <Input
-                    type="date"
-                    value={filters.dateTo}
-                    onChange={(e) =>
-                      onFiltersChange({ ...filters, dateTo: e.target.value })
-                    }
-                    className="w-full"
-                    placeholder="Đến ngày"
-                  />
-                </div>
-              )}
-            </div>
-            {/* Lọc theo loại set */}
-            <div className="flex flex-col gap-1">
-              <Label className="text-xs mb-1">Loại set</Label>
-              <Select value={type} onValueChange={(v) => setType(v)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Loại set" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tất cả</SelectItem>
-                  <SelectItem value={OrderType.Family}>Gia đình</SelectItem>
-                  <SelectItem value={OrderType.Friendship}>Bạn bè</SelectItem>
-                  <SelectItem value={OrderType.Gift}>Quà tặng</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            {/* Lọc theo trạng thái */}
-            <div className="flex flex-col gap-1">
-              <Label className="text-xs mb-1">Trạng thái</Label>
-              <Select value={status} onValueChange={(v) => setStatus(v)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Trạng thái" />
-                </SelectTrigger>
-                <SelectContent>
-                  {statusOptions.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <DialogFooter className="pt-4">
-            <Button onClick={handleSearch} variant="primary">
-              Tìm kiếm
-            </Button>
-            <DialogClose asChild>
-              <Button onClick={handleReset} variant="outline" type="button">
-                Đặt lại
-              </Button>
-            </DialogClose>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+    <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-2 mb-4 w-full">
+      {/* Tìm kiếm */}
+      <Input
+        placeholder="Nhập tên hoặc số điện thoại..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        className="w-full sm:w-[220px]"
+      />
+      {/* Tháng */}
+      <Select value={selectedMonth} onValueChange={(v) => setSelectedMonth(v)}>
+        <SelectTrigger className="w-full sm:w-[150px]">
+          <SelectValue placeholder="Chọn tháng" />
+        </SelectTrigger>
+        <SelectContent>
+          {monthOptions.map((opt) => (
+            <SelectItem key={opt.value} value={opt.value}>
+              {opt.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      {/* Loại set */}
+      <Select value={type} onValueChange={(v) => setType(v)}>
+        <SelectTrigger className="w-full sm:w-[130px]">
+          <SelectValue placeholder="Loại set" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Tất cả</SelectItem>
+          <SelectItem value={OrderType.Family}>Gia đình</SelectItem>
+          <SelectItem value={OrderType.Friendship}>Bạn bè</SelectItem>
+          <SelectItem value={OrderType.Gift}>Quà tặng</SelectItem>
+        </SelectContent>
+      </Select>
+      {/* Trạng thái */}
+      <Select value={status} onValueChange={(v) => setStatus(v)}>
+        <SelectTrigger className="w-full sm:w-[130px]">
+          <SelectValue placeholder="Trạng thái" />
+        </SelectTrigger>
+        <SelectContent>
+          {statusOptions.map((opt) => (
+            <SelectItem key={opt.value} value={opt.value}>
+              {opt.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      {/* Nút Đặt lại */}
+      <Button
+        onClick={handleReset}
+        variant="outline"
+        type="button"
+        className="w-full sm:w-auto"
+      >
+        Đặt lại
+      </Button>
     </div>
   );
 };

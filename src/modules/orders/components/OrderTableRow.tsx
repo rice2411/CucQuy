@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Order } from "@/modules/orders/types/order";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
-import { OrderType, OrderStatus } from "../enums/order";
+import { getTypeInfo, getStatusInfo } from "../helpers/orderHelpers";
 
 interface OrderTableRowProps {
   order: Order;
@@ -17,6 +17,8 @@ const OrderTableRow: React.FC<OrderTableRowProps> = ({
   onEdit,
   onDelete,
 }) => {
+  const typeInfo = getTypeInfo(order.type);
+  const statusInfo = getStatusInfo(order.status);
   return (
     <TableRow>
       <TableCell>{order.customerName}</TableCell>
@@ -25,28 +27,20 @@ const OrderTableRow: React.FC<OrderTableRowProps> = ({
         {format(order.orderDate.toDate(), "dd/MM/yyyy", { locale: vi })}
       </TableCell>
       <TableCell>
-        {order.type === OrderType.Family
-          ? "Gia đình"
-          : order.type === OrderType.Friendship
-          ? "Bạn bè"
-          : "Quà tặng"}
+        <span
+          className={`px-2 py-1 w-fit  rounded-full font-medium text-xs ${typeInfo.color} flex items-center gap-1`}
+        >
+          {typeInfo.icon}
+          {typeInfo.label}
+        </span>
       </TableCell>
       <TableCell>{order.quantity}</TableCell>
       <TableCell>
         <span
-          className={
-            order.status === OrderStatus.Completed
-              ? "bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs"
-              : order.status === OrderStatus.Pending
-              ? "bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs"
-              : "bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs"
-          }
+          className={`px-2 py-1 w-fit  rounded-full text-xs font-semibold flex items-center gap-1 ${statusInfo.color}`}
         >
-          {order.status === OrderStatus.Completed
-            ? "Hoàn thành"
-            : order.status === OrderStatus.Pending
-            ? "Đang chờ"
-            : "Đã hủy"}
+          <span>{statusInfo.emoji}</span>
+          {statusInfo.label}
         </span>
       </TableCell>
       <TableCell>{order.note || "-"}</TableCell>
@@ -54,8 +48,9 @@ const OrderTableRow: React.FC<OrderTableRowProps> = ({
         <div className="flex gap-2 justify-end">
           <Button
             size="sm"
-            variant="ghost"
+            variant="outline"
             aria-label="Sửa"
+            className="border-blue-500 text-blue-600 hover:bg-blue-50"
             onClick={() => onEdit(order)}
           >
             Sửa

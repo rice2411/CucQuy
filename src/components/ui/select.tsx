@@ -5,7 +5,7 @@ import * as SelectPrimitive from "@radix-ui/react-select";
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import Image from "next/image";
 
-import { cn } from "@/core/lib/utils";
+import { cn } from "@/core/utils/tailwind";
 
 function Select({
   ...props
