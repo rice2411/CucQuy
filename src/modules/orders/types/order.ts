@@ -1,3 +1,5 @@
+import { OrderType, OrderStatus } from "../enums/order";
+
 export interface Order {
   id: string;
   customerName: string;
@@ -5,8 +7,8 @@ export interface Order {
   orderDate: {
     toDate: () => Date;
   };
-  type: "family" | "friendship" | "gift";
-  status: "completed" | "pending" | "cancelled";
+  type: OrderType;
+  status: OrderStatus;
   quantity: number;
   note?: string;
   createdAt: {
@@ -18,8 +20,8 @@ export interface OrderFormData {
   customerName: string;
   phone: string;
   orderDate: string;
-  type: "family" | "friendship" | "gift";
+  type: OrderType;
   quantity: number;
   note: string;
-  status?: "completed" | "pending" | "cancelled";
+  status?: OrderStatus;
 }

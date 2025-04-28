@@ -16,7 +16,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { OrderFormData } from "@/types/order";
+import { OrderType, OrderStatus } from "../enums/order";
+import { OrderFormData } from "@/modules/orders/types/order";
 
 interface OrderFormProps {
   isOpen: boolean;
@@ -37,10 +38,10 @@ const OrderForm: React.FC<OrderFormProps> = ({
     customerName: "",
     phone: "",
     orderDate: "",
-    type: "family",
+    type: OrderType.Family,
     quantity: 1,
     note: "",
-    status: "completed",
+    status: OrderStatus.Completed,
   },
   isSubmitting,
   title,
@@ -60,7 +61,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] max-h-screen overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
@@ -107,7 +108,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
               onValueChange={(value) =>
                 setFormData({
                   ...formData,
-                  type: value as "family" | "friendship" | "gift",
+                  type: value as OrderType,
                 })
               }
             >
@@ -115,9 +116,9 @@ const OrderForm: React.FC<OrderFormProps> = ({
                 <SelectValue placeholder="Chọn loại set" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="family">Gia đình</SelectItem>
-                <SelectItem value="friendship">Bạn bè</SelectItem>
-                <SelectItem value="gift">Quà tặng</SelectItem>
+                <SelectItem value={OrderType.Family}>Gia đình</SelectItem>
+                <SelectItem value={OrderType.Friendship}>Bạn bè</SelectItem>
+                <SelectItem value={OrderType.Gift}>Quà tặng</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -129,7 +130,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
                 onValueChange={(value) =>
                   setFormData({
                     ...formData,
-                    status: value as "completed" | "pending" | "cancelled",
+                    status: value as OrderStatus,
                   })
                 }
               >
@@ -137,9 +138,13 @@ const OrderForm: React.FC<OrderFormProps> = ({
                   <SelectValue placeholder="Chọn trạng thái" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="completed">Hoàn thành</SelectItem>
-                  <SelectItem value="pending">Đang xử lý</SelectItem>
-                  <SelectItem value="cancelled">Đã hủy</SelectItem>
+                  <SelectItem value={OrderStatus.Completed}>
+                    Hoàn thành
+                  </SelectItem>
+                  <SelectItem value={OrderStatus.Pending}>
+                    Đang xử lý
+                  </SelectItem>
+                  <SelectItem value={OrderStatus.Cancelled}>Đã hủy</SelectItem>
                 </SelectContent>
               </Select>
             </div>

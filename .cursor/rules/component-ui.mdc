@@ -3,4 +3,113 @@ description:
 globs: 
 alwaysApply: false
 ---
-If create new componet please make sure use ui from src\components\ui
+Create UI Component from Figma – Rule Set
+
+General Principles
+
+- Transform Figma designs into clean, modular React components using TypeScript.
+
+- Prioritize reusing components from src/components/ui.
+
+- If a required component does not exist, install it via shadcn/ui.
+
+- Ensure all components are fully responsive across devices (mobile, tablet, desktop).
+
+Code Style and Structure
+
+- Write clear, modular TypeScript code.
+
+- Prefer functional components over class components.
+
+- Use descriptive, meaningful variable and prop names (e.g., isOpen, buttonVariant, cardContent).
+
+- Co-locate styles and components when logical.
+
+- Use Tailwind CSS for styling according to the Figma specification.
+
+- Apply proper error handling for dynamic data or missing props.
+
+- Document components and their props using JSDoc.
+
+Component Architecture and Best Practices
+
+- Structure components by feature: /components/{feature}/ComponentName.tsx
+
+- Split large UI into smaller reusable parts.
+
+- Use composition and slots (children) instead of prop drilling where possible.
+
+- Maintain atomic design principles (atoms, molecules, organisms).
+
+- Implement loading and empty states clearly.
+
+UI Libraries and Standards
+
+- Reuse components from src/components/ui first.
+
+- Extend existing components before creating a new one.
+
+- If missing, install the required component from shadcn/ui (e.g., Button, Dialog, Card).
+
+- Customize shadcn components minimally to maintain consistency.
+
+- Follow Material Design and Figma design tokens if provided.
+
+Responsiveness and Accessibility
+
+- Ensure full responsive behavior using Tailwind’s breakpoint utilities (sm, md, lg, xl, 2xl).
+
+- Verify mobile-first design with a focus on touch targets.
+
+- Implement keyboard navigation and focus states.
+
+- Use ARIA attributes for accessibility (e.g., aria-label, role).
+
+State Management and Interactivity
+
+- Use useState, useEffect, and other React hooks properly.
+
+- Animate components using Framer Motion if specified.
+
+- Handle interaction states (hover, active, focus) based on Figma specs.
+
+Testing and Debugging
+
+- Test components with React Testing Library.
+
+- Verify responsiveness using browser DevTools (device toolbar).
+
+- Handle edge cases (e.g., missing image, empty text, long content).
+
+Performance Optimization
+
+- Avoid unnecessary re-renders using React.memo where appropriate.
+
+- Lazy-load heavy components.
+
+- Optimize images and assets if used.
+
+Publishing and Documentation
+
+- Include Storybook stories for each component when possible.
+
+- Provide usage examples in README if custom behavior is added.
+
+- Document any external dependencies or additional setup steps.
+
+    Compliance with Figma Design
+
+- Match padding, margin, font size, colors, and spacing to Figma exactly.
+
+- Use Tailwind configuration to define custom colors, fonts, or spacing if needed.
+
+- Request clarification from the design team when specifications are ambiguous.
+
+Output Expectations
+
+- Deliver clean, working, maintainable code.
+
+- Ensure all UI matches Figma 1:1 unless otherwise justified.
+
+- Use reusable components to maximize scalability.
+

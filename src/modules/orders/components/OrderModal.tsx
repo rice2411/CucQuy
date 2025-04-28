@@ -7,7 +7,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Order } from "@/types/order";
+import { Order } from "@/modules/orders/types/order";
 
 interface OrderModalProps {
   isOpen: boolean;
@@ -23,7 +23,6 @@ interface OrderModalProps {
 const OrderModal: React.FC<OrderModalProps> = ({
   isOpen,
   onClose,
-  order,
   onConfirm,
   title,
   message,
@@ -32,7 +31,7 @@ const OrderModal: React.FC<OrderModalProps> = ({
 }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] max-h-screen overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
