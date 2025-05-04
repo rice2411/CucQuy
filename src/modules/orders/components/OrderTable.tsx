@@ -19,9 +19,9 @@ import OrderCard from "./OrderCard";
 import { notifyTelegram } from "@/core/services/telegram.service";
 import { buildOrderTelegramMessage } from "@/core/utils/telegram.util";
 import { OrderType, OrderStatus } from "../enums/order";
-import { useIsMobile } from "../hooks/useIsMobile";
-import { useOrderFilter } from "../hooks/useOrderFilter";
+import { useIsMobile } from "../../../core/hooks/useIsMobile";
 import { OrderService } from "../services/order.service";
+import { getFirstDayOfMonth, getLastDayOfMonth } from "@/core/utils/date.util";
 
 /**
  * Hiển thị bảng danh sách đơn hàng với các thao tác CRUD, filter, phân trang.
@@ -37,14 +37,48 @@ const OrderTable: React.FC = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [allOrders, setAllOrders] = useState<Order[]>([]);
   const itemsPerPage = 20;
-  const {
-    orders,
-    filters,
-    setFilters,
-    currentPage,
-    setCurrentPage,
-    setOrders,
-  } = useOrderFilter(allOrders);
+
+  // Thay thế hook useOrderFilter bằng các state thường
+  const [filters, setFilters] = useState({
+    dateFrom: getFirstDayOfMonth(),
+    dateTo: getLastDayOfMonth(),
+    type: "all",
+    searchTerm: "",
+  });
+  const [orders, setOrders] = useState<Order[]>(allOrders);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Logic filter chuyển từ hook sang useEffect trong component
+  useEffect(() => {
+    let resultOrders = [...allOrders];
+    // Lọc theo ngày
+    if (filters.dateFrom && filters.dateTo) {
+      const startDate = new Date(filters.dateFrom);
+      const endDate = new Date(filters.dateTo);
+      endDate.setHours(23, 59, 59, 999);
+      resultOrders = resultOrders.filter((order) => {
+        const orderDate = order.orderDate.toDate();
+        return orderDate >= startDate && orderDate <= endDate;
+      });
+    }
+    // Lọc theo loại set
+    if (filters.type !== "all") {
+      resultOrders = resultOrders.filter(
+        (order) => order.type === filters.type
+      );
+    }
+    // Tìm kiếm theo tên hoặc số điện thoại
+    if (filters.searchTerm) {
+      const searchLower = filters.searchTerm.toLowerCase();
+      resultOrders = resultOrders.filter(
+        (order) =>
+          order.customerName.toLowerCase().includes(searchLower) ||
+          order.phone.includes(filters.searchTerm)
+      );
+    }
+    setOrders(resultOrders);
+    setCurrentPage(1);
+  }, [allOrders, filters]);
 
   const [loading, setLoading] = useState(true);
 
