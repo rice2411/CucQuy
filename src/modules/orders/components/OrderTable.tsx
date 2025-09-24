@@ -299,7 +299,7 @@ const OrderTable: React.FC = () => {
               </TableRow>
             </TableHeader>
             <OrderTableBody
-              orders={orders}
+              orders={orders.sort((a, b) => b.orderDate - a.orderDate)}
               loading={loading}
               currentOrders={currentOrders}
               onEdit={(order) => {
