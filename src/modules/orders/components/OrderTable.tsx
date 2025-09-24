@@ -237,8 +237,8 @@ const OrderTable: React.FC = () => {
 
   // UI Table/Card
   return (
-    <div className="w-full max-w-7xl mx-auto p-4">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+    <div className="p-4 mx-auto w-full max-w-7xl">
+      <div className="flex flex-col gap-2 mb-4 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-xl font-semibold text-gray-900">
           Danh sách đơn hàng
         </h2>
@@ -263,9 +263,9 @@ const OrderTable: React.FC = () => {
       {isMobile ? (
         <div className="flex flex-col gap-3">
           {loading ? (
-            <div className="text-center py-8">Đang tải dữ liệu...</div>
+            <div className="py-8 text-center">Đang tải dữ liệu...</div>
           ) : orders.length === 0 ? (
-            <div className="text-center py-8">Không có đơn hàng nào.</div>
+            <div className="py-8 text-center">Không có đơn hàng nào.</div>
           ) : (
             currentOrders.map((order) => (
               <OrderCard
@@ -299,7 +299,7 @@ const OrderTable: React.FC = () => {
               </TableRow>
             </TableHeader>
             <OrderTableBody
-              orders={orders.sort((a, b) => b.orderDate - a.orderDate)}
+              orders={orders.sort((a, b) => b.orderDate.toDate().getTime() - a.orderDate.toDate().getTime())}
               loading={loading}
               currentOrders={currentOrders}
               onEdit={(order) => {
