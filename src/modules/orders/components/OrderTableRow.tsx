@@ -4,7 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Order } from "@/modules/orders/types/order";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
-import { getTypeInfo, getStatusInfo } from "../helpers/orderHelpers";
+import {
+  getTypeInfo,
+  getStatusInfo,
+  getUnitPrice,
+  getTotalPrice,
+} from "../helpers/orderHelpers";
 
 interface OrderTableRowProps {
   order: Order;
@@ -35,6 +40,27 @@ const OrderTableRow: React.FC<OrderTableRowProps> = ({
         </span>
       </TableCell>
       <TableCell>{order.quantity}</TableCell>
+      <TableCell>
+        {(() => {
+          const unitPrice = getUnitPrice(order.type, order.note);
+          return unitPrice !== null
+            ? new Intl.NumberFormat("vi-VN").format(unitPrice) + " đ"
+            : "-";
+        })()}
+      </TableCell>
+      <TableCell>
+        {order.shippingCost
+          ? new Intl.NumberFormat("vi-VN").format(order.shippingCost) + " đ"
+          : "-"}
+      </TableCell>
+      <TableCell>
+        {(() => {
+          const totalPrice = getTotalPrice(order);
+          return totalPrice !== null
+            ? new Intl.NumberFormat("vi-VN").format(totalPrice) + " đ"
+            : "-";
+        })()}
+      </TableCell>
       <TableCell>
         <span
           className={`px-2 py-1 w-fit  rounded-full text-xs font-semibold flex items-center gap-1 ${statusInfo.color}`}

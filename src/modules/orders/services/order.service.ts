@@ -29,6 +29,7 @@ export class OrderService {
         type: formData.type,
         quantity: formData.quantity,
         note: formData.note,
+        shippingCost: formData.shippingCost || 0,
         status: formData.status ?? OrderStatus.Completed,
         createdAt: Timestamp.fromDate(new Date()),
       }
@@ -47,6 +48,7 @@ export class OrderService {
       type: formData.type,
       quantity: formData.quantity,
       note: formData.note,
+      shippingCost: formData.shippingCost || 0,
       status: formData.status ?? OrderStatus.Completed,
       createdAt: (formData as any).createdAt
         ? (formData as any).createdAt

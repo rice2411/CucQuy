@@ -3,7 +3,12 @@ import { Order } from "@/modules/orders/types/order";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
-import { getTypeInfo, getStatusInfo } from "../helpers/orderHelpers";
+import {
+  getTypeInfo,
+  getStatusInfo,
+  getUnitPrice,
+  getTotalPrice,
+} from "../helpers/orderHelpers";
 import {
   CalendarIcon,
   UserIcon,
@@ -85,6 +90,45 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onEdit, onDelete }) => {
               ) : (
                 <span className="italic text-gray-400">Chưa có số lượng</span>
               )}
+            </b>
+          </span>
+        </div>
+        <div className="flex items-center gap-2 text-gray-500 text-sm">
+          <span>
+            Đơn giá:{" "}
+            <b className="text-gray-800">
+              {(() => {
+                const unitPrice = getUnitPrice(order.type, order.note);
+                return unitPrice !== null
+                  ? new Intl.NumberFormat("vi-VN").format(unitPrice) + " đ"
+                  : "-";
+              })()}
+            </b>
+          </span>
+        </div>
+        <div className="flex items-center gap-2 text-gray-500 text-sm">
+          <span>
+            Giá ship:{" "}
+            <b className="text-gray-800">
+              {order.shippingCost ? (
+                new Intl.NumberFormat("vi-VN").format(order.shippingCost) +
+                " đ"
+              ) : (
+                <span className="italic text-gray-400">0 đ</span>
+              )}
+            </b>
+          </span>
+        </div>
+        <div className="flex items-center gap-2 text-gray-600 text-sm font-semibold border-t pt-2 mt-1">
+          <span>
+            Thành tiền:{" "}
+            <b className="text-gray-900 text-base">
+              {(() => {
+                const totalPrice = getTotalPrice(order);
+                return totalPrice !== null
+                  ? new Intl.NumberFormat("vi-VN").format(totalPrice) + " đ"
+                  : "-";
+              })()}
             </b>
           </span>
         </div>

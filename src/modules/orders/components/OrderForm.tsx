@@ -42,6 +42,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
     type: OrderType.Family,
     quantity: 1,
     note: "",
+    shippingCost: 0,
     status: OrderStatus.Pending,
   },
   isSubmitting,
@@ -187,6 +188,22 @@ const OrderForm: React.FC<OrderFormProps> = ({
                 setFormData({ ...formData, note: e.target.value })
               }
               placeholder="Nhập ghi chú (nếu có)"
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="shippingCost">Giá ship (VNĐ)</Label>
+            <Input
+              id="shippingCost"
+              type="number"
+              min="0"
+              value={formData.shippingCost || 0}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  shippingCost: parseFloat(e.target.value) || 0,
+                })
+              }
+              placeholder="Nhập giá ship"
             />
           </div>
           <DialogFooter>

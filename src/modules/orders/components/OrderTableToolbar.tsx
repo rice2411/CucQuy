@@ -8,6 +8,14 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { Order } from "@/modules/orders/types/order";
 
 import { OrderType, OrderStatus } from "../enums/order";
@@ -18,6 +26,7 @@ import {
 } from "../../../core/utils/date.util";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
+import { getUnitPrice, getTotalPrice } from "../helpers/orderHelpers";
 
 interface OrderTableToolbarProps {
   filters: {
@@ -61,6 +70,15 @@ const OrderTableToolbar: React.FC<OrderTableToolbarProps> = ({
       2,
       "0"
     )}`;
+  });
+  const [isExportDialogOpen, setIsExportDialogOpen] = React.useState(false);
+  const [exportMonthFrom, setExportMonthFrom] = React.useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  });
+  const [exportMonthTo, setExportMonthTo] = React.useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   });
 
   // Hàm lọc dữ liệu (tự động gọi khi thay đổi trường)
@@ -128,69 +146,136 @@ const OrderTableToolbar: React.FC<OrderTableToolbarProps> = ({
     setSelectedMonth(resetMonth);
   };
 
-  // Hàm xuất Excel
-  const handleExportExcel = () => {
-    // Lấy danh sách đơn hàng đang hiển thị (sau khi lọc)
-    // allOrders là toàn bộ, còn orders đã lọc nằm ở cha, nên ta sẽ lọc lại theo filter hiện tại
-    let resultOrders = [...allOrders];
-    // Lọc theo tháng
-    if (selectedMonth) {
-      const [year, month] = selectedMonth.split("-").map(Number);
-      const startDate = new Date(year, month - 1, 1, 0, 0, 0, 0);
-      const endDate = new Date(year, month, 0, 23, 59, 59, 999);
-      resultOrders = resultOrders.filter((order) => {
-        const orderDate = order.orderDate.toDate();
-        return orderDate >= startDate && orderDate <= endDate;
-      });
-    }
-    if (type !== "all") {
-      resultOrders = resultOrders.filter((order) => order.type === type);
-    }
-    if (status !== "all") {
-      resultOrders = resultOrders.filter((order) => order.status === status);
-    }
-    if (searchTerm) {
-      const searchLower = searchTerm.toLowerCase();
-      resultOrders = resultOrders.filter(
-        (order) =>
-          order.customerName.toLowerCase().includes(searchLower) ||
-          order.phone.includes(searchTerm)
+  // Helper function để lấy danh sách tháng trong range
+  const getMonthsInRange = (fromMonth: string, toMonth: string) => {
+    const months: string[] = [];
+    const [fromYear, fromMonthNum] = fromMonth.split("-").map(Number);
+    const [toYear, toMonthNum] = toMonth.split("-").map(Number);
+    
+    let currentYear = fromYear;
+    let currentMonth = fromMonthNum;
+    
+    while (
+      currentYear < toYear ||
+      (currentYear === toYear && currentMonth <= toMonthNum)
+    ) {
+      months.push(
+        `${currentYear}-${String(currentMonth).padStart(2, "0")}`
       );
+      currentMonth++;
+      if (currentMonth > 12) {
+        currentMonth = 1;
+        currentYear++;
+      }
     }
-    // Chuyển đổi dữ liệu sang dạng phù hợp cho Excel
-    const data = resultOrders.map((order) => {
-      let giaTien = "";
-      if (order.type === OrderType.Friendship) giaTien = "22000";
-      else if (order.type === OrderType.Family) giaTien = "35000";
-      else if (order.type === OrderType.Gift) giaTien = order.note || "";
-      return {
-        "Tên khách hàng": order.customerName,
-        "Số điện thoại": order.phone,
-        "Ngày đặt": order.orderDate.toDate().toLocaleDateString(),
-        "Loại set": order.type,
-        "Số lượng": order.quantity,
-        "Trạng thái": order.status,
-        "Ghi chú": order.note || "",
-        "Giá tiền": giaTien,
-        "Ngày tạo": order.createdAt.toDate().toLocaleDateString(),
-      };
-    });
-    // Tạo worksheet và workbook
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "DoanhThu");
-    // Xuất file
-    const now = new Date();
-    const fileName = `doanh_thu_${now.getFullYear()}_${
-      now.getMonth() + 1
-    }_${now.getDate()}.xlsx`;
-    const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-    const blob = new Blob([excelBuffer], { type: "application/octet-stream" });
-    saveAs(blob, fileName);
+    
+    return months;
+  };
+
+  // Hàm xuất Excel với range tháng
+  const handleExportExcel = () => {
+    try {
+      // Lấy danh sách tháng trong range
+      const months = getMonthsInRange(exportMonthFrom, exportMonthTo);
+      
+      // Lọc đơn hàng theo filter (type, status, searchTerm)
+      let filteredOrders = [...allOrders];
+      if (type !== "all") {
+        filteredOrders = filteredOrders.filter((order) => order.type === type);
+      }
+      if (status !== "all") {
+        filteredOrders = filteredOrders.filter((order) => order.status === status);
+      }
+      if (searchTerm) {
+        const searchLower = searchTerm.toLowerCase();
+        filteredOrders = filteredOrders.filter(
+          (order) =>
+            order.customerName.toLowerCase().includes(searchLower) ||
+            order.phone.includes(searchTerm)
+        );
+      }
+
+      // Tạo workbook
+      const wb = XLSX.utils.book_new();
+
+      // Tạo sheet cho mỗi tháng
+      months.forEach((monthStr) => {
+        const [year, month] = monthStr.split("-").map(Number);
+        const startDate = new Date(year, month - 1, 1, 0, 0, 0, 0);
+        const endDate = new Date(year, month, 0, 23, 59, 59, 999);
+
+        // Lọc đơn hàng theo tháng
+        const monthOrders = filteredOrders.filter((order) => {
+          const orderDate = order.orderDate.toDate();
+          return orderDate >= startDate && orderDate <= endDate;
+        });
+
+        // Chuyển đổi dữ liệu sang dạng phù hợp cho Excel
+        const data = monthOrders.map((order) => {
+          const unitPrice = getUnitPrice(order.type, order.note);
+          const totalPrice = getTotalPrice(order);
+          return {
+            "Tên khách hàng": order.customerName,
+            "Số điện thoại": order.phone,
+            "Ngày đặt": order.orderDate.toDate().toLocaleDateString("vi-VN"),
+            "Loại set": order.type,
+            "Số lượng": order.quantity,
+            "Đơn giá": unitPrice !== null ? unitPrice : "",
+            "Giá ship": order.shippingCost || 0,
+            "Thành tiền": totalPrice !== null ? totalPrice : "",
+            "Trạng thái": order.status,
+            "Ghi chú": order.note || "",
+            "Ngày tạo": order.createdAt.toDate().toLocaleDateString("vi-VN"),
+          };
+        });
+
+        // Chỉ tạo sheet nếu có đơn hàng trong tháng
+        if (data.length > 0) {
+          // Tính tổng doanh thu của tháng
+          const totalRevenue = monthOrders.reduce((sum, order) => {
+            const totalPrice = getTotalPrice(order);
+            return sum + (totalPrice !== null ? totalPrice : 0);
+          }, 0);
+
+          // Thêm dòng tổng vào cuối data
+          const totalRow: any = {};
+          Object.keys(data[0]).forEach((key) => {
+            if (key === "Thành tiền") {
+              totalRow[key] = totalRevenue;
+            } else if (key === "Tên khách hàng") {
+              totalRow[key] = "TỔNG DOANH THU";
+            } else {
+              totalRow[key] = "";
+            }
+          });
+          data.push(totalRow);
+
+          // Tạo worksheet
+          const ws = XLSX.utils.json_to_sheet(data);
+          
+          // Đặt tên sheet (tối đa 31 ký tự, không được chứa: \ / ? * [ ])
+          // Thay thế dấu / bằng dấu - để tránh lỗi
+          const sheetName = `T${month}-${year}`.substring(0, 31);
+          XLSX.utils.book_append_sheet(wb, ws, sheetName);
+        }
+      });
+
+      // Xuất file
+      const fileName = `doanh_thu_${exportMonthFrom}_den_${exportMonthTo}.xlsx`;
+      const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+      const blob = new Blob([excelBuffer], { type: "application/octet-stream" });
+      saveAs(blob, fileName);
+
+      // Đóng dialog
+      setIsExportDialogOpen(false);
+    } catch (error) {
+      console.error("Error exporting Excel:", error);
+      alert("Có lỗi xảy ra khi xuất Excel!");
+    }
   };
 
   return (
-    <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-2 mb-4 w-full">
+    <div className="flex flex-col gap-2 items-stretch mb-4 w-full sm:flex-row sm:items-end">
       {/* Tìm kiếm */}
       <Input
         placeholder="Nhập tên hoặc số điện thoại..."
@@ -247,13 +332,83 @@ const OrderTableToolbar: React.FC<OrderTableToolbarProps> = ({
       </Button>
       {/* Nút Xuất Excel */}
       <Button
-        onClick={handleExportExcel}
+        onClick={() => setIsExportDialogOpen(true)}
         variant="primary"
         type="button"
         className="w-full sm:w-auto"
       >
         Xuất Excel
       </Button>
+
+      {/* Dialog chọn range tháng để xuất Excel */}
+      <Dialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Chọn khoảng tháng để xuất Excel</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="exportMonthFrom">Từ tháng</Label>
+              <Select
+                value={exportMonthFrom}
+                onValueChange={setExportMonthFrom}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Chọn tháng bắt đầu" />
+                </SelectTrigger>
+                <SelectContent>
+                  {monthOptions.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="exportMonthTo">Đến tháng</Label>
+              <Select value={exportMonthTo} onValueChange={setExportMonthTo}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Chọn tháng kết thúc" />
+                </SelectTrigger>
+                <SelectContent>
+                  {monthOptions.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsExportDialogOpen(false)}
+            >
+              Hủy
+            </Button>
+            <Button
+              type="button"
+              onClick={handleExportExcel}
+              disabled={
+                !exportMonthFrom ||
+                !exportMonthTo ||
+                (() => {
+                  // So sánh tháng để đảm bảo từ tháng <= đến tháng
+                  if (!exportMonthFrom || !exportMonthTo) return false;
+                  const [fromYear, fromMonth] = exportMonthFrom.split("-").map(Number);
+                  const [toYear, toMonth] = exportMonthTo.split("-").map(Number);
+                  return fromYear > toYear || (fromYear === toYear && fromMonth > toMonth);
+                })()
+              }
+            >
+              Xuất Excel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

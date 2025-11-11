@@ -89,6 +89,7 @@ const OrderTable: React.FC = () => {
     type: OrderType.Family,
     quantity: 1,
     note: "",
+    shippingCost: 0,
   });
 
   // Thêm state cho form cập nhật
@@ -99,6 +100,7 @@ const OrderTable: React.FC = () => {
     type: OrderType.Family,
     quantity: 1,
     note: "",
+    shippingCost: 0,
     status: OrderStatus.Completed,
   });
 
@@ -133,6 +135,7 @@ const OrderTable: React.FC = () => {
         type: selectedOrder.type,
         quantity: selectedOrder.quantity,
         note: selectedOrder.note || "",
+        shippingCost: selectedOrder.shippingCost || 0,
         status: selectedOrder.status,
       });
     }
@@ -157,6 +160,7 @@ const OrderTable: React.FC = () => {
         type: OrderType.Family,
         quantity: 1,
         note: "",
+        shippingCost: 0,
       });
       // Refetch orders
       const fetchedOrders = await OrderService.fetchOrders();
@@ -293,6 +297,9 @@ const OrderTable: React.FC = () => {
                 <TableHead>Ngày đặt</TableHead>
                 <TableHead>Loại set</TableHead>
                 <TableHead>Số lượng</TableHead>
+                <TableHead>Đơn giá</TableHead>
+                <TableHead>Giá ship</TableHead>
+                <TableHead>Thành tiền</TableHead>
                 <TableHead>Trạng thái</TableHead>
                 <TableHead>Ghi chú</TableHead>
                 <TableHead className="text-right">Thao tác</TableHead>

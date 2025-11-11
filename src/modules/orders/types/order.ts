@@ -11,6 +11,7 @@ export interface Order {
   status: OrderStatus;
   quantity: number;
   note?: string;
+  shippingCost?: number;
   createdAt: {
     toDate: () => Date;
   };
@@ -23,5 +24,6 @@ export interface OrderFormData {
   type: OrderType;
   quantity: number;
   note: string;
+  shippingCost?: number;
   status?: OrderStatus;
 }

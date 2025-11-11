@@ -22,13 +22,13 @@ const OrderTableBody: React.FC<OrderTableBodyProps> = ({
     <TableBody>
       {loading ? (
         <TableRow>
-          <TableCell colSpan={8} className="text-center py-8">
+          <TableCell colSpan={11} className="text-center py-8">
             Đang tải dữ liệu...
           </TableCell>
         </TableRow>
       ) : orders.length === 0 ? (
         <TableRow>
-          <TableCell colSpan={8} className="text-center py-8">
+          <TableCell colSpan={11} className="text-center py-8">
             Không có đơn hàng nào.
           </TableCell>
         </TableRow>
